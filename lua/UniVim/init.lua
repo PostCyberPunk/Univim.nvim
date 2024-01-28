@@ -3,44 +3,39 @@ local chanID = 0
 local socketPath = '/tmp/Univim'
 
 M.setup = function()
-  vim.api.nvim_create_user_command('UnityQutiPlayMode', function()
+  vim.api.nvim_create_user_command('UnivimQutiPlayMode', function()
     M.sendMsg('stop')
   end, {})
-  vim.api.nvim_create_user_command('UnityEnterPlayMode', function()
+  vim.api.nvim_create_user_command('UnivimEnterPlayMode', function()
     M.sendMsg('play')
   end, {})
-  vim.api.nvim_create_user_command('UnityPausePlayMode', function()
+  vim.api.nvim_create_user_command('UnivimPausePlayMode', function()
     M.sendMsg('pause')
   end, {})
-  vim.api.nvim_create_user_command('UnityHello', function()
-    M.sendMsg('hello')
-  end, {})
-  vim.api.nvim_create_user_command('UnivimReconnect', function()
-		chanID = 0;
+  vim.api.nvim_create_user_command('UnivimCompile', function()
+    M.sendMsg('comp')
   end, {})
 end
 
 function M.sendMsg(msg)
-  if M.checkID() then
+  if M.checkConnection() then
+    print(chanID)
     vim.fn.chansend(chanID, msg)
   else
-    vim.notify(
-      "Univim:Can't connect to Unity. Please check if univim.unity is running.",
-      vim.log.levels.WARN
-    )
+    vim.notify("Univim:Can't connect to Unity.", vim.log.levels.WARN)
   end
 end
 
 function M.connectUnity()
   chanID = vim.fn.sockconnect('pipe', socketPath)
-	print(chanID)
 end
-function M.checkID()
-  if chanID ~= 0 then
-    return true
-  end
+function M.checkConnection()
   if pcall(M.connectUnity) then
-    return true
+    if chanID ~= 0 then
+      return true
+    else
+      return false
+    end
   else
     return false
   end
