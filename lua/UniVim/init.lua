@@ -1,6 +1,6 @@
 local M = {}
-local chanID = 0
 local socketPath = '/tmp/Univim'
+local uv = require('luv')
 
 M.setup = function()
   vim.api.nvim_create_user_command('UnivimQutiPlayMode', function()
@@ -18,27 +18,16 @@ M.setup = function()
 end
 
 function M.sendMsg(msg)
-  if M.checkConnection() then
-    print(chanID)
-    vim.fn.chansend(chanID, msg)
-  else
-    vim.notify("Univim:Can't connect to Unity.", vim.log.levels.WARN)
-  end
-end
-
-function M.connectUnity()
-  chanID = vim.fn.sockconnect('pipe', socketPath)
-end
-function M.checkConnection()
-  if pcall(M.connectUnity) then
-    if chanID ~= 0 then
-      return true
+  local pipe = uv.new_pipe()
+	-- TODO: still cannot get disconnected status
+  pipe:connect(socketPath, function(err)
+    if not err then
+      pipe:write(msg)
+      pipe:close()
     else
-      return false
+      vim.notify("Univim:Can't connect to Unity.", vim.log.levels.WARN)
     end
-  else
-    return false
-  end
+  end)
 end
 
 return M
